@@ -1,0 +1,5 @@
+{
+	"prefix": "!",
+	"token": "Place token here",
+	"commands": ["s", "bl", "dbl", "help"]
+}
