@@ -26,6 +26,9 @@ module.exports = {
             case commands[2]:
                 showBlackList(msg);
                 break;
+            case commands[3]:
+                help(msg);
+                break;
         }
     },
 
@@ -71,7 +74,7 @@ function showBlackList(msg){
         txts += ' | ' + element;
     });
 
-    msg.channel.send('```' + txts + '```');
+    msg.channel.send(msgBlock(txts));
 }
 
 function loadHash(){
@@ -79,3 +82,15 @@ function loadHash(){
         hash.load(element);
     });
 }
+
+function help(msg){
+    var commandOptions = "";
+    commands.forEach((str) => {
+        commandOptions += ' | ' + str;
+    })
+
+    msg.channel.send('Here are the list of commands:\n' + 
+    msgBlock(commandOptions));
+}
+
+function msgBlock(str){return '```' + str + '```'}

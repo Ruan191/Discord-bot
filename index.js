@@ -2,6 +2,7 @@ const Discord = require('discord.js');
 const {prefix, token} = require('./config.json');
 const commands = require("./commands.js");
 const um = require("./userManagement.js");
+const perm = new Discord.Permissions();
 
 const client = new Discord.Client();
 const d = um.db;
@@ -17,7 +18,9 @@ client.once('ready', () => {
 
 client.on("message", msg => {
     var words = msg.content.split(' ');
-    if (!msg.author.bot && msg.content.startsWith(prefix)){
+    const hasBotPerms = msg.member.hasPermission('BAN_MEMBERS', {checkAdmin: true});
+
+    if (!msg.author.bot && msg.content.startsWith(prefix) && hasBotPerms){
 
         if (!commands.isValid(msg)){
             msg.reply('Please enter a valid command');
@@ -26,15 +29,16 @@ client.on("message", msg => {
 
         commands.run(commands.cmd, msg);
     }
-    
+
     if(!msg.author.bot){
 
         for (let i = 0; i < words.length; i++){
-            if (commands.hash.textExist(words[i].toLowerCase())){
-                msg.delete();
-                msg.reply('Hey! That word is not allowed!');
-                break;
-            }        
+            if (!hasBotPerms)
+                if (commands.hash.textExist(words[i].toLowerCase())){
+                    msg.delete();
+                    msg.reply('Hey! That word is not allowed!');
+                    break;
+                }        
         }
 
         var id = msg.author.id;
