@@ -70,8 +70,12 @@ client.on("message", msg => {
         um.getUserXP(id, (xp) => {
             um.getXPRequired(id, (required) => {
                 if (xp >= required){
-                    msg.channel.send('lvl up!');
-                    msg.channel.send('https://tenor.com/view/cute-anime-dancing-silly-happy-excited-gif-13462237');
+                    const embed = new Discord.MessageEmbed()    
+                    .setTitle(msg.author.username + ', lvl up!')
+                    .setImage('https://media.tenor.com/images/4fd49de4149a6d348e04f2465a3970af/tenor.gif')
+                    .setColor('#0099ff');
+                    
+                    msg.reply(embed);
                     um.levelUP(id);
                 }
             })
