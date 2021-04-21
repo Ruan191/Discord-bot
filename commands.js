@@ -1,6 +1,7 @@
 const Discord = require('discord.js');
 const {commands, prefix} = require('./config.json');
 var fs = require("fs");
+const um = require("./userManagement.js");
 
 const client = new Discord.Client();
 const bLocation = "blackListedWords.csv";
@@ -14,20 +15,23 @@ module.exports = {
     cmd: null,
     hash: hash,
     getBlackList: function(){return getBlackList()},
-        
-    run(cmd, msg){
+
+    run(cmd, msg, hasPerm, onPermFail){
         switch(cmd){
             case commands[0]:
-                say(msg);
+                permNeeded(true, hasPerm, () => {say(msg);}, onPermFail); 
                 break;
             case commands[1]:
-                blackList(msg);
+                permNeeded(true, hasPerm, () => {blackList(msg);}, onPermFail);
                 break;
             case commands[2]:
-                showBlackList(msg);
+                permNeeded(true, hasPerm, () => {showBlackList(msg);}, onPermFail);
                 break;
             case commands[3]:
-                help(msg);
+                permNeeded(true, hasPerm, () => {help(msg);}, onPermFail);
+                break;
+            case commands[4]:
+                myLvl(msg);
                 break;
         }
     },
@@ -43,7 +47,6 @@ module.exports = {
     },
 
     loadHash: function(){loadHash();}
-
 }
 
 function getBlackList(){return txt = fs.readFileSync(bLocation, 'utf8').toString().split(',')}
@@ -74,7 +77,12 @@ function showBlackList(msg){
         txts += ' | ' + element;
     });
 
-    msg.channel.send(msgBlock(txts));
+    const embed = new Discord.MessageEmbed()    
+    .setTitle('Black Listed Words')
+    .addFields({ name: 'Words', value: txts, inline: true})
+    .setColor('#0099ff');
+
+    msg.channel.send(embed);
 }
 
 function loadHash(){
@@ -89,8 +97,42 @@ function help(msg){
         commandOptions += ' | ' + str;
     })
 
-    msg.channel.send('Here are the list of commands:\n' + 
-    msgBlock(commandOptions));
+    const embed = new Discord.MessageEmbed()    
+    .setTitle('List Of Commands')
+    .addFields({ name: 'Commands', value: commandOptions, inline: true})
+    .setColor('#0099ff');
+
+    msg.channel.send(embed);
 }
 
-function msgBlock(str){return '```' + str + '```'}
+function myLvl(msg){
+    const id = msg.author.id;
+
+    um.getLvl(id, (lvl) => {
+        um.getXPRequired(id, (xpNeeded) => {
+            um.getUserXP(id, (xp) => {
+                const embed = new Discord.MessageEmbed()
+                .setThumbnail(msg.author.avatarURL())
+                .setTitle(msg.author.username)
+                .addFields({ name: 'lvl', value: lvl, inline: true},  {name: 'xp', value: `${xp} / ${xpNeeded}`, inline: true})
+                .setColor('#0099ff');
+
+                msg.channel.send(embed);
+            })
+        })
+    })
+}
+
+function permNeeded(needPerm = true, hasPerm, func, onFail){
+    if (needPerm){
+        if (hasPerm){
+            func();
+        }else{
+            onFail();
+        }
+    }else{
+        func();
+    }
+}
+
+function msgBlock(str, syn = ""){return '```' + syn + '\n'+ str + '```'}

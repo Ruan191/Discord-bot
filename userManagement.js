@@ -24,6 +24,14 @@ function getXPRequired(id, callback){
     });
 }
 
+function getLvl(id, callback){
+    db.get(`SELECT lvl FROM UserInfo WHERE UserID = ${id};`, (err, row) => {
+        if (err)
+            console.log(err);
+        else callback(row.lvl);
+    });
+}
+
 function levelUP(id){
     var myPromise = new Promise((resolve, reject) => {
         db.get(updateRow(id, 'lvl', '+1'));
@@ -74,5 +82,6 @@ module.exports = {
     clear:clear,
     addXPToUser: addXPToUser,
     getXPRequired: getXPRequired,
-    levelUP: levelUP
+    levelUP: levelUP,
+    getLvl: getLvl
 }

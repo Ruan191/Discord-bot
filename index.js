@@ -5,6 +5,7 @@ const um = require("./userManagement.js");
 const perm = new Discord.Permissions();
 
 const client = new Discord.Client();
+
 const d = um.db;
 
 client.once('ready', () => {
@@ -13,21 +14,43 @@ client.once('ready', () => {
 
     client.channels.holds.length
     client.users.cache.array().forEach(ele => {um.addUser(ele.id);});
-	console.log('Ready!');
+	console.log('Ready!');   
 });
+
+var timeSinceLastMsg = Date.now();
+var spamCount = 0;
 
 client.on("message", msg => {
     var words = msg.content.split(' ');
     const hasBotPerms = msg.member.hasPermission('BAN_MEMBERS', {checkAdmin: true});
 
-    if (!msg.author.bot && msg.content.startsWith(prefix) && hasBotPerms){
+    const secPassed = (Date.now() - timeSinceLastMsg) / 1000;
+    timeSinceLastMsg = Date.now();
+    
+    if (secPassed < 3){
+        spamCount++;
+    }else{
+        spamCount = 0;
+    }
+    
+    if (spamCount >= 5){
+        msg.channel.setRateLimitPerUser(5, 'Spam')
+        setTimeout(() => {
+            msg.channel.setRateLimitPerUser(0, 'Spam')
+            spamCount = 0;
+        }, 20000)
+    }
+
+    if (!msg.author.bot && msg.content.startsWith(prefix)){
 
         if (!commands.isValid(msg)){
             msg.reply('Please enter a valid command');
             return null;
         }
 
-        commands.run(commands.cmd, msg);
+        commands.run(commands.cmd, msg, hasBotPerms, () => {
+            msg.reply("You can't use this command!");
+        });    
     }
 
     if(!msg.author.bot){
@@ -41,7 +64,7 @@ client.on("message", msg => {
                 }        
         }
 
-        var id = msg.author.id;
+        const id = msg.author.id;
         um.addXPToUser(id, words.length);
 
         um.getUserXP(id, (xp) => {
