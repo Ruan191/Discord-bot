@@ -1,7 +1,8 @@
 const Discord = require('discord.js');
-const {prefix, token} = require('./config.json');
+const {prefix, token, levelUpImage} = require('./config.json');
 const commands = require("./commands.js");
 const um = require("./userManagement.js");
+const { levelUP } = require('./userManagement.js');
 const perm = new Discord.Permissions();
 
 const client = new Discord.Client();
@@ -13,7 +14,9 @@ client.once('ready', () => {
     commands.loadHash();
 
     client.channels.holds.length
-    client.users.cache.array().forEach(ele => {um.addUser(ele.id);});
+    client.users.cache.array().forEach(ele => {
+        um.addUser(ele.id);
+    });
 	console.log('Ready!');   
 });
 
@@ -54,7 +57,6 @@ client.on("message", msg => {
     }
 
     if(!msg.author.bot){
-
         for (let i = 0; i < words.length; i++){
             if (!hasBotPerms)
                 if (commands.hash.textExist(words[i].toLowerCase())){
@@ -72,7 +74,7 @@ client.on("message", msg => {
                 if (xp >= required){
                     const embed = new Discord.MessageEmbed()    
                     .setTitle(msg.author.username + ', lvl up!')
-                    .setImage('https://media.tenor.com/images/4fd49de4149a6d348e04f2465a3970af/tenor.gif')
+                    .setImage(levelUpImage)
                     .setColor('#0099ff');
                     
                     msg.reply(embed);

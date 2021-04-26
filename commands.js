@@ -1,12 +1,15 @@
 const Discord = require('discord.js');
 const {commands, prefix} = require('./config.json');
 var fs = require("fs");
+const {token} = require('./config.json');
 const um = require("./userManagement.js");
 
-const client = new Discord.Client();
 const bLocation = "blackListedWords.csv";
 
 const {HashMap} = require("./hashMap.js");
+const { rejects } = require('assert');
+const client = new Discord.Client();
+client.login(token);
 
 const hash = new HashMap(1000,10);
 
@@ -31,7 +34,10 @@ module.exports = {
                 permNeeded(true, hasPerm, () => {help(msg);}, onPermFail);
                 break;
             case commands[4]:
-                myLvl(msg);
+                dLvl(msg);
+                break;
+            case commands[5]:
+                permNeeded(true, hasPerm, () => {performTaskOnMember(msg);}, onPermFail)
                 break;
         }
     },
@@ -105,15 +111,26 @@ function help(msg){
     msg.channel.send(embed);
 }
 
-function myLvl(msg){
-    const id = msg.author.id;
+function dLvl(msg){
+    const m = msg.content.split(' ');
 
-    um.getLvl(id, (lvl) => {
-        um.getXPRequired(id, (xpNeeded) => {
-            um.getUserXP(id, (xp) => {
+    let pingedMsgId = null;
+    let user = null;
+
+    if (m[1] == undefined || m[1] == ''){
+        pingedMsgId = msg.author.id;
+        user = msg.author;
+    }else{
+        pingedMsgId = getPingId(m[1]);
+        user = client.users.cache.array().find(user => user.id === pingedMsgId);
+    }
+
+    um.getLvl(pingedMsgId, (lvl) => {
+        um.getXPRequired(pingedMsgId, (xpNeeded) => {
+            um.getUserXP(pingedMsgId, (xp) => {
                 const embed = new Discord.MessageEmbed()
-                .setThumbnail(msg.author.avatarURL())
-                .setTitle(msg.author.username)
+                .setThumbnail(user.avatarURL())
+                .setTitle(user.username)
                 .addFields({ name: 'lvl', value: lvl, inline: true},  {name: 'xp', value: `${xp} / ${xpNeeded}`, inline: true})
                 .setColor('#0099ff');
 
@@ -136,3 +153,35 @@ function permNeeded(needPerm = true, hasPerm, func, onFail){
 }
 
 function msgBlock(str, syn = ""){return '```' + syn + '\n'+ str + '```'}
+
+function getPingId(str = ""){
+    return str.replace('<@!', '').replace('>', '');
+}
+
+function performTaskOnMember(msg = new Discord.Message){
+    const m = msg.content.split(' ');
+    const userId = getPingId(m[2]);
+    const task = m[1];
+
+    msg.guild.members.fetch(userId).then((user) => {
+        switch (task) {
+            case 'kick':
+                user.kick();
+                break;
+            case 'ban':
+                user.ban();
+                break;
+            case 'mute':
+                user.roles.add(getRole('Muted', msg.guild));
+                break;
+            case 'unmute':
+                user.roles.remove(getRole('Muted', msg.guild));
+            default:
+                break;
+        }
+    });
+}
+
+function getRole(role = "", g = new Discord.Guild){
+    return g.roles.cache.find(a => a.name === role);    
+}
