@@ -21,31 +21,31 @@ module.exports = {
 
     run(cmd, msg, hasPerm, onPermFail){
         switch(cmd){
-            case commands[0]:
+            case commands.list[0]:
                 permNeeded(true, hasPerm, () => {say(msg);}, onPermFail); 
                 break;
-            case commands[1]:
+            case commands.list[1]:
                 permNeeded(true, hasPerm, () => {blackList(msg);}, onPermFail);
                 break;
-            case commands[2]:
+            case commands.list[2]:
                 permNeeded(true, hasPerm, () => {showBlackList(msg);}, onPermFail);
                 break;
-            case commands[3]:
+            case commands.list[3]:
                 permNeeded(true, hasPerm, () => {help(msg);}, onPermFail);
                 break;
-            case commands[4]:
+            case commands.list[4]:
                 dLvl(msg);
                 break;
-            case commands[5]:
+            case commands.list[5]:
                 permNeeded(true, hasPerm, () => {performTaskOnMember(msg);}, onPermFail)
                 break;
         }
     },
 
     isValid: function(msg){
-        for (let i = 0; i < commands.length; i++){
-            if (msg.content.substring(0,commands[i].length + 1) == prefix + commands[i]){
-                this.cmd = commands[i];  
+        for (let i = 0; i < commands.list.length; i++){
+            if (msg.content.substring(0,commands.list[i].length + 1) == prefix + commands.list[i]){
+                this.cmd = commands.list[i];  
                 return true;
             }    
         }
@@ -99,7 +99,7 @@ function loadHash(){
 
 function help(msg){
     var commandOptions = "";
-    commands.forEach((str) => {
+    commands.list.forEach((str) => {
         commandOptions += ' | ' + str;
     })
 

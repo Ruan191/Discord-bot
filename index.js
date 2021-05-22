@@ -1,6 +1,6 @@
 const Discord = require('discord.js');
-const {prefix, token, levelUpImage, AntiSpam} = require('./config.json');
-const commands = require("./commands.js");
+const {prefix, token, level_up, AntiSpam, bannable_words, commands} = require('./config.json');
+const cmd = require("./commands.js");
 const um = require("./userManagement.js");
 
 const client = new Discord.Client();
@@ -44,46 +44,50 @@ client.on("message", msg => {
     }
     //#endregion
     //#region Commands
-    if (!msg.author.bot && msg.content.startsWith(prefix)){
+    if (!msg.author.bot && msg.content.startsWith(prefix) && commands.enabled){
 
-        if (!commands.isValid(msg)){
-            msg.reply('Please enter a valid command');
+        if (!cmd.isValid(msg)){
+            msg.reply(commands.wrong_command_msg);
             return null;
         }
 
-        commands.run(commands.cmd, msg, hasBotPerms, () => {
-            msg.reply("You can't use this command!");
+        cmd.run(cmd.cmd, msg, hasBotPerms, () => {
+            msg.reply(commands.perm_needed_msg);
         });    
     }
     //#endregion
     //#region BannableWords
     if(!msg.author.bot){
-        for (let i = 0; i < words.length; i++){
-            if (!hasBotPerms)
-                if (commands.hash.textExist(words[i].toLowerCase())){
-                    msg.delete();
-                    msg.reply('Hey! That word is not allowed!');
-                    break;
-                }        
+        if (bannable_words.enabled){
+            for (let i = 0; i < words.length; i++){
+                if (!hasBotPerms)
+                    if (cmd.hash.textExist(words[i].toLowerCase())){
+                        msg.delete();
+                        msg.reply(bannable_words.reply);
+                        break;
+                    }        
+            }
         }
         //#endregion
     //#region Level up system
-        const id = msg.author.id;
-        um.addXPToUser(id, words.length);
-
-        um.getUserXP(id, (xp) => {
-            um.getXPRequired(id, (required) => {
-                if (xp >= required){
-                    const embed = new Discord.MessageEmbed()    
-                    .setTitle(msg.author.username + ', lvl up!')
-                    .setImage(levelUpImage)
-                    .setColor('#0099ff');
-                    
-                    msg.reply(embed);
-                    um.levelUP(id);
-                }
-            })
-        });
+        if (level_up.enabled){
+            const id = msg.author.id;
+            um.addXPToUser(id, words.length);
+    
+            um.getUserXP(id, (xp) => {
+                um.getXPRequired(id, (required) => {
+                    if (xp >= required){
+                        const embed = new Discord.MessageEmbed()    
+                        .setTitle(msg.author.username + ', lvl up!')
+                        .setImage(level_up.img)
+                        .setColor('#0099ff');
+                        
+                        msg.reply(embed);
+                        um.levelUP(id);
+                    }
+                })
+            });
+        }
     //#endregion
     }
     //#endregion
