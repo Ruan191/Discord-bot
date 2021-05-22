@@ -1,21 +1,18 @@
 const Discord = require('discord.js');
-const {prefix, token, levelUpImage} = require('./config.json');
+const {prefix, token, levelUpImage, AntiSpam} = require('./config.json');
 const commands = require("./commands.js");
 const um = require("./userManagement.js");
-const { levelUP } = require('./userManagement.js');
-const perm = new Discord.Permissions();
 
 const client = new Discord.Client();
-
-const d = um.db;
 
 client.once('ready', () => {
     um.db;
     commands.loadHash();
 
     client.channels.holds.length
+
     client.users.cache.array().forEach(ele => {
-        um.addUser(ele.id);
+        um.addUser(ele.id); //Adds new members to the database
     });
 	console.log('Ready!');   
 });
@@ -30,20 +27,23 @@ client.on("message", msg => {
     const secPassed = (Date.now() - timeSinceLastMsg) / 1000;
     timeSinceLastMsg = Date.now();
     
-    if (secPassed < 3){
+    //#region Features
+    //#region Anti-spam
+    if (secPassed < AntiSpam.timeToSpamCount){
         spamCount++;
     }else{
         spamCount = 0;
     }
     
-    if (spamCount >= 5){
-        msg.channel.setRateLimitPerUser(5, 'Spam')
+    if (spamCount >= AntiSpam.spamAmmountToTrigger && AntiSpam.enabled){
+        msg.channel.setRateLimitPerUser(AntiSpam.timePerMsg, 'Spam')
         setTimeout(() => {
             msg.channel.setRateLimitPerUser(0, 'Spam')
             spamCount = 0;
-        }, 20000)
+        }, AntiSpam.lifeTime)
     }
-
+    //#endregion
+    //#region Commands
     if (!msg.author.bot && msg.content.startsWith(prefix)){
 
         if (!commands.isValid(msg)){
@@ -55,7 +55,8 @@ client.on("message", msg => {
             msg.reply("You can't use this command!");
         });    
     }
-
+    //#endregion
+    //#region BannableWords
     if(!msg.author.bot){
         for (let i = 0; i < words.length; i++){
             if (!hasBotPerms)
@@ -65,7 +66,8 @@ client.on("message", msg => {
                     break;
                 }        
         }
-
+        //#endregion
+    //#region Level up system
         const id = msg.author.id;
         um.addXPToUser(id, words.length);
 
@@ -82,7 +84,9 @@ client.on("message", msg => {
                 }
             })
         });
+    //#endregion
     }
+    //#endregion
 });
 
 client.on('guildMemberAdd', (gm) => {
